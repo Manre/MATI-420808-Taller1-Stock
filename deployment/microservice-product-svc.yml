@@ -1,0 +1,53 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    run: microservice-stock-svc
+  name: microservice-stock-svc
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      run: microservice-stock-svc
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        run: microservice-stock-svc
+    spec:
+      containers:
+      - name: microservice-stock-svc
+        image: docker.io/alexchacon/microservice-stock
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: API_QUEUE
+            value: "192.168.50.4"
+          - name: API_QUEUE
+            value: "postgresql://vagrant:vagrant@192.168.50.9:5432/marketplace"
+        ports:
+        - containerPort: 3000
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    run: microservice-stock-svc
+  name: microservice-stock-svc
+  namespace: default
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 3001
+  selector:
+    run: microservice-stock-svc
+  sessionAffinity: None
+  type: LoadBalancer
