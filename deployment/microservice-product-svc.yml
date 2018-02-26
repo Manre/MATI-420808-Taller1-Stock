@@ -28,7 +28,7 @@ spec:
         env:
           - name: API_QUEUE
             value: "192.168.50.4"
-          - name: API_QUEUE
+          - name: DATABASE_URL
             value: "postgresql://vagrant:vagrant@192.168.50.9:5432/marketplace"
         ports:
         - containerPort: 3000
