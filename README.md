@@ -55,4 +55,4 @@ Run the application with following command
 
 ```npm run start:dev```
 
-And visiting http://localhost:3000
+And visiting http://localhost:3001
