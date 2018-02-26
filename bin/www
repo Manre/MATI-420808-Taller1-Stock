@@ -8,12 +8,13 @@ const app = require('../app');
 const debug = require('debug')('mati-42080-taller1-stock:server');
 const http = require('http');
 const models = require('../models');
-
+const amqp = require('amqplib/callback_api');
+const product = require('../models').product;
 /**
  * Get port from environment and store in Express.
  */
 
-const port = normalizePort(process.env.PORT || '3000');
+const port = normalizePort(process.env.PORT || '3001');
 app.set('port', port);
 
 /**
@@ -102,3 +103,42 @@ function onListening()
     const bind = typeof address === 'string' ? 'pipe ' + address  : 'port ' + address.port;
     debug('Listening on ' + bind);
 }
+
+
+const queueIp = "192.168.50.4";
+
+amqp.connect('amqp://test:test@' + queueIp + ':5672', function(err, conn)
+{
+    conn.createChannel(function(err, ch)
+    {
+        const ex = 'products';
+
+        ch.assertExchange(ex, 'fanout', {durable: false});
+        ch.assertQueue('', {exclusive: true}, function(err, q)
+        {
+            console.log(" [*] Waiting for messages in %s. To exit press CTRL+C", q.queue);
+            ch.bindQueue(q.queue, ex, '');
+
+            ch.consume(q.queue, function(msg) {
+                console.log(" [x] %s", msg.content.toString());
+                const newProduct = JSON.parse(msg.content.toString());
+
+                return product
+                    .create({
+                        id: newProduct.id,
+                        name: newProduct.name,
+                        description: newProduct.description,
+                        weight: newProduct.weight,
+                        width: newProduct.width,
+                        height: newProduct.height,
+                        depth: newProduct.depth,
+                        information: newProduct.information,
+                    })
+                    .then(product => console.log(" Product created: " + product))
+                    .catch(error => console.log(error));
+
+
+            }, {noAck: true});
+        });
+    });
+});
